@@ -455,7 +455,7 @@ export class App extends PureComponent<Props, State> {
     }
 
     if (favicon) {
-      handleFavicon(favicon)
+      handleFavicon(favicon, this.connectionManager)
     }
 
     // Only change layout/sidebar when the page config has changed.
@@ -624,7 +624,10 @@ export class App extends PureComponent<Props, State> {
 
     // Set the title and favicon to their default values
     document.title = `${scriptName} · Streamlit`
-    handleFavicon(`${process.env.PUBLIC_URL}/favicon.png`)
+    handleFavicon(
+      `${process.env.PUBLIC_URL}/favicon.png`,
+      this.connectionManager
+    )
 
     MetricsManager.current.setMetadata(
       this.props.s4aCommunication.currentState.streamlitShareMetadata
@@ -930,9 +933,17 @@ export class App extends PureComponent<Props, State> {
       queryString = queryString.substring(1)
     }
 
+    let pageName = ""
+    const baseUriParts =
+      this.connectionManager && this.connectionManager.getBaseUriParts()
+    if (baseUriParts) {
+      const { basePath } = baseUriParts
+      pageName = window.location.pathname.replace(`/${basePath}`, "")
+    }
+
     this.sendBackMsg(
       new BackMsg({
-        rerunScript: { queryString, widgetStates },
+        rerunScript: { queryString, widgetStates, pageName },
       })
     )
   }
@@ -1193,6 +1204,7 @@ export class App extends PureComponent<Props, State> {
               uploadClient={this.uploadClient}
               componentRegistry={this.componentRegistry}
               formsData={this.state.formsData}
+              connectionManager={this.connectionManager}
             />
             {renderedDialog}
           </StyledApp>
